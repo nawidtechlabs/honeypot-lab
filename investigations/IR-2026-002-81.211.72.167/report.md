@@ -1,93 +1,115 @@
-# IR-2026-002 — SSH Intrusion from Moscow, Russia
-**Date:** May 23, 2026  
-**Analyst:** Nawid Farani, SOC Analyst  
-**Target IP:** 81.211.72.167  
-**Classification:** TLP:WHITE  
+# IR-2026-002 - SSH Intrusion + Persistence - Moscow Russia
 
-## Executive Summary
-On May 23, 2026 at 06:10:56 UTC, a threat actor originating from IP address 81.211.72.167 successfully authenticated to the Cowrie SSH honeypot using credentials root/Test1234560. Following authentication, the attacker executed three reconnaissance commands to fingerprint the system before disconnecting. No malware was dropped and no C2 communication was observed. The attacker is attributed to a fixed-line business ethernet connection in Moscow, Russia operated by PJSC Vimpelcom via Golden Telecom. This IP has 42,353 abuse reports on AbuseIPDB with 100% confidence of malicious activity. Evidence was fully preserved prior to investigation with an intact chain of custody.
+Report ID: IR-2026-002
+Version: 2.1
+Date: May 23, 2026
+Analyst: Nawid Farani, SOC Analyst
+Target IP: 81.211.72.167
+Severity: HIGH
+Status: CLOSED
+Classification: TLP:WHITE
 
-## Timeline
-| Time (UTC) | Event |
-|------------|-------|
-| 06:10:56 | Successful SSH login as root using password Test1234560 |
-| 06:11:00 | Command executed: whoami |
-| 06:11:04 | Command executed: w |
-| 06:11:07 | Command executed: top |
-| 06:11:xx | Attacker disconnected |
+EXECUTIVE SUMMARY
 
-## Credentials Used
-- Username: root
-- Password: Test1234560
+On May 23, 2026, threat actor IP 81.211.72.167 successfully authenticated to the Cowrie SSH honeypot using credentials root/Test1234560. After initial reconnaissance the attacker returned 15 minutes later and planted a known malicious SSH public key in authorized_keys establishing a permanent backdoor. The key was physically recovered from the Cowrie downloads folder, verified via SHA256, and confirmed malicious by 33/61 VirusTotal vendors. This same key has been targeting systems globally since 2018. Attribution: Moscow Russia, Golden Telecom fixed-line ethernet, PJSC Vimpelcom, 42,353 AbuseIPDB reports, 100% confidence.
 
-## Post-Login Commands
-- whoami — confirmed running as root
-- w — enumerated logged in users
-- top — surveyed running processes
+ATTACK TIMELINE
 
-## Threat Actor Enrichment
+06:07:48 - Initial SSH connection - Recon
+06:10:56 - Login SUCCESS root/Test1234560 - Initial Access
+06:11:00 - Command whoami - Discovery
+06:11:04 - Command w - Discovery
+06:11:07 - Command top - Discovery
+06:17:17 - Session closed
+06:23:39 - ATTACKER RETURNED - Persistence
+06:26:55 - FILE DOWNLOAD SSH public key planted - Persistence
+06:27:00 - Command whoami - Discovery
+06:27:02 - Command w - Discovery
+06:27:04 - Command top - Discovery
+06:33:15 - Third connection attempt
+06:36:30 - Final session closed
 
-### Shodan
-No results found. IP not indexed. Actively avoiding detection.
+PERSISTENCE MECHANISM CONFIRMED
 
-### Censys
-- WHOIS Network: Golden Telecom P2P-MOSCOW-BC-NET
-- WHOIS Organization: PJSC Vimpelcom
-- Address: 8 Marta str 10 bld 14, 127083 Moscow, Russian Federation
-- ASN: SOVAM-AS 3216 RU
-- Location: Moscow, Russia
-- Total Services: 0
+File Type: OpenSSH RSA Public Key
+SHA256: a8460f446be540410004b1a8db4083773fa46f7fe76fa84219c93daa1669f8f2
+MD5: a420f7a60a40f3ff3a806a01feb1dfda
+File Size: 389 bytes
+Key Label: mdrfckr
+VirusTotal: 33/61 vendors flagged Trojan and Miner
+First Seen: 2018-07-05 Global campaign since 2018
+Recovery: Physically recovered from Cowrie downloads folder
 
-### RIPE (Ground Truth)
-- inetnum: 81.211.72.0 - 81.211.72.255
-- netname: P2P-Moscow-BC-NET
-- Organization: PJSC Vimpelcom
-- Country: RU
-- Abuse contact: abuse-b2b@beeline.ru
+Key content verified by direct file read:
+ssh-rsa AAAAB3NzaC1yc2EAAAABJQAAAQEArDp4cun2lhr4KUhBGE7VvAcwdli2a8dbnrTOrbMz1+5O73fcBOx8NVbUT0bUanUV9tJ2/9p7+vD0EpZ3Tz/+0kX34uAx1RV/75GVOmNx+9EuWOnvNoaJe0QXxziIg9eLBHpgLMuakb5+BgTFB+rKJAw9u9FSTDengvS8hX1kNFS4Mjux0hJOK8rvcEmPecjdySYMb66nylAKGwCEE6WEQHmd1mUPgHwGQ0hWCwsQk13yCGPK5w6hYp5zYkFnvlC8hGmd4Ww+u97k6pfTGTUbJk14ujvcD9iUKQTTWYYjIIu5PmUux5bsZ0R4WFwdIe6+i6rBLAsPKgAySVKPRK+oRw== mdrfckr
 
-### AbuseIPDB
-- Reports: 42,353
-- Confidence: 100%
-- ISP: Golden Telecom
-- Usage Type: Fixed Line ISP
-- Categories: Brute-Force, SSH, Web App Attack
+THREAT ACTOR ENRICHMENT
 
-## Splunk Analysis
-- Cowrie events: 28
-- Suricata events: 40
-- Alert signatures: ET INFO SSH session in progress on Expected Port (7 hits)
-- SSH client: libssh_0.9.6
-- HASSH: f555226df1963d1d3c09daf865abdc9a
+Shodan: No results actively avoiding detection
+Censys: Golden Telecom P2P-MOSCOW-BC-NET PJSC Vimpelcom Moscow RU 0 services
+RIPE: P2P-Moscow-BC-NET Country RU abuse-b2b@beeline.ru
+AbuseIPDB: 42353 reports 100% confidence Fixed Line ISP
 
-## C2 Analysis
-No HTTP events detected for this IP in Suricata. No C2 communication observed. Reconnaissance-only intrusion.
+Four Source Verdict: Russian fixed-line business ethernet in Moscow. Not a VPS. Not a bot farm. Real endpoint deliberately avoiding Shodan detection. All four sources agree.
 
-## MITRE ATT&CK Mapping
-| Technique | ID | Description |
-|-----------|-----|-------------|
-| Brute Force: Password Guessing | T1110.001 | SSH brute force using wordlist |
-| Valid Accounts | T1078 | Authenticated as root |
-| System Owner/User Discovery | T1033 | whoami command |
-| System Network Connections Discovery | T1049 | w command |
-| Process Discovery | T1057 | top command |
+SPLUNK ANALYSIS
 
-## Chain of Evidence
-- Raw Cowrie logs: ~/ir_findings/81.211.72.167/cowrie.log (45KB)
-- Raw Suricata logs: ~/ir_findings/81.211.72.167/suricata.log (38KB)
-- Evidence preserved: 2026-05-23 06:23 UTC BEFORE investigation began
-- Chain of custody: INTACT — no evidence gaps
+Cowrie Events: 28 total
+session.params: 17
+command.input: 6
+session.closed: 3
+session.connect: 2
+session.file_download: 1
+login.success: 1
+login.failed: 1
+log.closed: 2
 
-## IOCs
-- IP: 81.211.72.167
-- SSH Client: libssh_0.9.6
-- HASSH: f555226df1963d1d3c09daf865abdc9a
-- Credentials: root / Test1234560
-- ASN: AS3216 SOVAM-AS Russia
+Suricata Events: 40 total
+ssh: 17
+flow: 16
+alert: 7
 
-## Recommendations
-1. Block 81.211.72.167 at perimeter firewall
-2. Block ASN AS3216 if Russian traffic is not expected
-3. Alert on HASSH f555226df1963d1d3c09daf865abdc9a
-4. Disable root SSH login on all production systems
-5. Enforce SSH key authentication, disable password auth
-6. Report to abuse-b2b@beeline.ru and abuse@gldn.net
+Alert Signature: ET INFO SSH session in progress on Expected Port 7 hits
+SSH Client: libssh_0.9.6
+HASSH: f555226df1963d1d3c09daf865abdc9a
+
+MITRE ATT&CK MAPPING
+
+T1110.001 - Brute Force Password Guessing - SSH brute force root/Test1234560
+T1078 - Valid Accounts - Successful root login 06:10:56
+T1033 - System Owner Discovery - whoami post-login
+T1049 - Network Connections Discovery - w command
+T1057 - Process Discovery - top command
+T1098.004 - SSH Authorized Keys - mdrfckr key planted 06:26:55
+T1496 - Resource Hijacking - VT miner family confirmed
+
+CHAIN OF EVIDENCE
+
+1. Raw Cowrie logs 45KB - Preserved 06:23 UTC before investigation - INTACT
+2. Raw Suricata logs 38KB - Preserved 06:23 UTC before investigation - INTACT
+3. Malicious SSH public key 389 bytes - Physically recovered Cowrie downloads - INTACT
+4. VirusTotal analysis 33/61 flagged - External analysis completed - INTACT
+5. Splunk events Cowrie and Suricata - Full session timeline documented - INTACT
+
+Evidence Gaps: NONE - Chain of custody INTACT
+
+INDICATORS OF COMPROMISE
+
+IP: 81.211.72.167
+ASN: AS3216 SOVAM-AS Russia
+Credential: root / Test1234560
+SSH Client: libssh_0.9.6
+HASSH: f555226df1963d1d3c09daf865abdc9a
+SHA256: a8460f446be540410004b1a8db4083773fa46f7fe76fa84219c93daa1669f8f2
+Key Label: mdrfckr
+
+RECOMMENDATIONS
+
+CRITICAL - Search all authorized_keys for SSH key labeled mdrfckr
+CRITICAL - Search for SHA256 a8460f446be540410004b1a8db4083773fa46f7fe76fa84219c93daa1669f8f2
+HIGH - Block 81.211.72.167 at perimeter firewall
+HIGH - Block ASN AS3216 if Russian traffic not expected
+HIGH - Disable root SSH password authentication
+HIGH - Enforce SSH key-only authentication
+MEDIUM - Alert on HASSH f555226df1963d1d3c09daf865abdc9a
+LOW - Report to abuse-b2b@beeline.ru and abuse@gldn.net
