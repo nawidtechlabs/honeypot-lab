@@ -3,9 +3,10 @@ import sys
 import json
 from datetime import datetime
 
-ABUSEIPDB_KEY = "0134d028f510f03a8a5a8649597c60a496f6e992caa863bb17862d19d5430224e936207ce63ed478"
-SHODAN_KEY = "YOUR_SHODAN_KEY"
-VIRUSTOTAL_KEY = "5a0098e8405645499255b9e4a9c485e20dae76dca35123e024ebf46c2c71a964"
+import os
+ABUSEIPDB_KEY = os.environ.get("ABUSEIPDB_KEY")
+SHODAN_KEY = os.environ.get("SHODAN_KEY")
+VIRUSTOTAL_KEY = os.environ.get("VIRUSTOTAL_KEY")
 
 def check_abuseipdb(ip):
     try:
